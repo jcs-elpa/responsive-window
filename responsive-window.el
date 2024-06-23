@@ -75,21 +75,21 @@
 ;;
 ;;; Layout
 
-(defvar responsive-window--was-max-size nil
+(defvar responsive-window--was-reached nil
   "Record if it was max size.")
 
 (defun responsive-window--reach-size ()
   "Reach the size will want to remember the layout."
   (let ((max-size (* (elenv-monitor-pixel-width) (elenv-monitor-pixel-height)))
         (frame-size (* (frame-pixel-width) (frame-pixel-height))))
-    (< (* max-size 0.8) frame-size)))
+    (< (* max-size 0.9) frame-size)))
 
 (defun responsive-window--remember-layout ()
   "Remember the frame layout once."
   (let ((reached (responsive-window--reach-size)))
     (when reached
       (window-configuration-to-register responsive-window-register))
-    (setq responsive-window--was-max-size (if reached t nil))))
+    (setq responsive-window--was-reached (if reached t nil))))
 
 (defun responsive-window--revert-layout ()
   "Revert window configuration."
@@ -99,28 +99,23 @@
 ;;
 ;;; Core
 
-(defun responsive-window--list ()
-  "Return the window list."
-  (seq-filter (lambda (win) (not (equal (minibuffer-window) win)))
-              (reverse (window-list))))
-
 (defun responsive-window--do ()
   "Do responsive work."
   (let ((revert t))
-    (dolist (win (responsive-window--list))
+    (dolist (win (window-list))
       (let* ((w (window-text-width win))
              (h (window-text-height win))
              (min-w2 (* 2 responsive-window-min-width))
              (min-h2 (* 2 responsive-window-min-height)))
-        (when (or (< w  responsive-window-min-width)
-                  (< h responsive-window-min-height))
-          (delete-window win))
-        (when revert
-          (when (or (< w min-w2)
-                    (< h min-h2))
-            (setq revert nil)))))
+        (cond ((or (< w  responsive-window-min-width)
+                   (< h responsive-window-min-height))
+               (ignore-errors (delete-window win)))
+              (revert
+               (when (or (< w min-w2)
+                         (< h min-h2))
+                 (setq revert nil))))))
     (when (and revert
-               (not responsive-window--was-max-size))
+               (not responsive-window--was-reached))
       (responsive-window--revert-layout))))
 
 (defun responsive-window--size-change (&rest _)
