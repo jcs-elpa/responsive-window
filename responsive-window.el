@@ -84,12 +84,17 @@
         (frame-size (* (frame-pixel-width) (frame-pixel-height))))
     (< (* max-size 0.9) frame-size)))
 
-(defun responsive-window--remember-layout ()
-  "Remember the frame layout once."
-  (let ((reached (responsive-window--reach-size)))
+(defun responsive-window--remember-layout (&optional force)
+  "Remember the frame layout once.
+
+If optional argument FORCE is non-nil, force remember it."
+  (let ((reached (or force (responsive-window--reach-size))))
     (when reached
       (window-configuration-to-register responsive-window-register))
     (setq responsive-window--was-reached (if reached t nil))))
+
+;; Initialize once
+(responsive-window--remember-layout t)
 
 (defun responsive-window--revert-layout ()
   "Revert window configuration."
