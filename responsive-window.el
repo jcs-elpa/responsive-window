@@ -4,9 +4,9 @@
 
 ;; Author: Shen, Jen-Chieh <jcs090218@gmail.com>
 ;; Maintainer: Shen, Jen-Chieh <jcs090218@gmail.com>
-;; URL: https://github.com/jcs090218/responsive-window
-;; Version: 0.0.1
-;; Package-Requires: ((emacs "24.3"))
+;; URL: https://github.com/jcs-elpa/responsive-window
+;; Version: 0.1.0
+;; Package-Requires: ((emacs "26.1") (elenv "0.1.0"))
 ;; Keywords: frames
 
 ;; This file is not part of GNU Emacs.
@@ -80,7 +80,7 @@
 
 (defun responsive-window--reach-size ()
   "Reach the size will want to remember the layout."
-  (let ((max-size (* (display-pixel-width) (display-pixel-height)))
+  (let ((max-size (* (elenv-monitor-pixel-width) (elenv-monitor-pixel-height)))
         (frame-size (* (frame-pixel-width) (frame-pixel-height))))
     (< (* max-size 0.8) frame-size)))
 
