@@ -29,6 +29,8 @@
 ;; Adapt to different screen sizes automatically.
 ;;
 
+(require 'elenv)
+
 ;;; Code:
 
 (defgroup responsive-window nil
@@ -80,9 +82,13 @@
 
 (defun responsive-window--reach-size ()
   "Reach the size will want to remember the layout."
-  (let ((max-size (* (elenv-monitor-pixel-width) (elenv-monitor-pixel-height)))
-        (frame-size (* (frame-pixel-width) (frame-pixel-height))))
-    (< (* max-size 0.9) frame-size)))
+  (let* ((m-width    (elenv-monitor-pixel-width))
+         (m-height   (elenv-monitor-pixel-height))
+         (f-width    (frame-pixel-width))
+         (f-height   (frame-pixel-height))
+         (max-size   (* m-width m-height))
+         (frame-size (* f-width f-height)))
+    (< (* max-size 0.8) frame-size)))  ; if almost full monitor
 
 (defun responsive-window--remember-layout (&optional force)
   "Remember the frame layout once.
