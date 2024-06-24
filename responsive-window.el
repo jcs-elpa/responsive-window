@@ -54,6 +54,11 @@
   :type 'integer
   :group 'responsive-window)
 
+(defcustom responsive-window-possession 0.8
+  "If frame is this much possession from the monitor; remember the layout."
+  :type 'float
+  :group 'responsive-window)
+
 ;;
 ;;; Entry
 
@@ -88,7 +93,7 @@
          (f-height   (frame-pixel-height))
          (max-size   (* m-width m-height))
          (frame-size (* f-width f-height)))
-    (< (* max-size 0.8) frame-size)))  ; if almost full monitor
+    (< (* max-size responsive-window-possession) frame-size)))  ; if almost full monitor
 
 (defun responsive-window--remember-layout (&optional force)
   "Remember the frame layout once.
