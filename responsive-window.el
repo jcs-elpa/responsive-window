@@ -132,13 +132,13 @@ If optional argument FORCE is non-nil, force remember it."
                (when (or (< w min-w2)
                          (< h min-h2))
                  (setq revert nil))))))
-    (when (and revert
-               (not responsive-window--was-reached))
+    (when revert
       (responsive-window--revert-layout))))
 
 (defun responsive-window--size-change (&rest _)
   "Window resize hook."
-  (unless (active-minibuffer-window)
+  (unless (or (active-minibuffer-window)
+              responsive-window--was-reached)
     (responsive-window--do))
   (responsive-window--remember-layout))
 
