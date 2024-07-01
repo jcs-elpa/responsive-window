@@ -87,8 +87,8 @@ The value should be set from 0 to 1."
 ;;
 ;;; Layout
 
-(defvar responsive-window--was-reached-p nil
-  "Record if it was max size.")
+(defvar responsive-window--dirty-p nil
+  "Record if the frame is polluted.")
 
 (defun responsive-window--reach-size ()
   "Reach the size will want to remember the layout."
@@ -100,20 +100,16 @@ The value should be set from 0 to 1."
          (frame-size (* f-width f-height)))
     (< (* max-size responsive-window-occupied-ratio) frame-size)))  ; if almost full monitor
 
-(defun responsive-window--remember-layout (&optional force)
-  "Remember the frame layout once.
-
-If optional argument FORCE is non-nil, force remember it."
-  (let ((reached (or force (responsive-window--reach-size))))
-    (when reached
-      (window-configuration-to-register responsive-window-register)
-      (setq responsive-window--first-reached-p t))
-    (setq responsive-window--was-reached-p (if reached t nil))))
+(defun responsive-window--remember-layout ()
+  "Remember the frame layout once."
+  (window-configuration-to-register responsive-window-register)
+  (setq responsive-window--first-reached-p t))
 
 (defun responsive-window--revert-layout ()
   "Revert window configuration."
   (save-selected-window
-    (ignore-errors (jump-to-register responsive-window-register))))
+    (ignore-errors (jump-to-register responsive-window-register)))
+  (setq responsive-window--dirty-p nil))
 
 ;;
 ;;; Core
@@ -121,30 +117,25 @@ If optional argument FORCE is non-nil, force remember it."
 (defun responsive-window--do ()
   "Do responsive work."
   (when responsive-window--first-reached-p
-    (let ((revert t))
-      (dolist (win (reverse (window-list)))
-        (let* ((w (window-text-width win))
-               (h (window-text-height win))
-               (min-w2 (* 2 responsive-window-min-width))
-               (min-h2 (* 2 responsive-window-min-height)))
-          (cond ((or (< w  responsive-window-min-width)
-                     (< h responsive-window-min-height))
-                 (ignore-errors (delete-window win))
-                 (setq revert nil))
-                (revert
-                 (when (or (< w min-w2)
-                           (< h min-h2))
-                   (setq revert nil))))))
-      (when (and revert
-                 (not responsive-window--was-reached-p))
-        (responsive-window--revert-layout)))))
+    (dolist (win (reverse (window-list)))
+      (let ((w (window-text-width win))
+            (h (window-text-height win)))
+        (when (or (< w  responsive-window-min-width)
+                  (< h responsive-window-min-height))
+          (ignore-errors (delete-window win))
+          (setq responsive-window--dirty-p t))))))
 
 (defun responsive-window--size-change (&optional frame &rest _)
   "Window resize hook."
-  (unless (frame-parent frame)  ; only root frame
-    (unless (active-minibuffer-window)
-      (responsive-window--do))
-    (responsive-window--remember-layout)))
+  (cond ((responsive-window--reach-size)
+         (cond (responsive-window--dirty-p
+                (responsive-window--revert-layout))
+               (t
+                (responsive-window--remember-layout))))
+        (t
+         (unless (or (frame-parent frame)  ; only root frame
+                     (active-minibuffer-window))
+           (responsive-window--do)))))
 
 (provide 'responsive-window)
 ;;; responsive-window.el ends here
