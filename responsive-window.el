@@ -90,6 +90,9 @@ The value should be set from 0 to 1."
 (defvar responsive-window--dirty-p nil
   "Record if the frame is polluted.")
 
+(defvar responsive-window--dirty-buffers nil
+  "Keep the dirty buffers.")
+
 (defun responsive-window--reach-size ()
   "Reach the size will want to remember the layout."
   (let* ((m-width    (elenv-monitor-pixel-width))
@@ -109,7 +112,11 @@ The value should be set from 0 to 1."
   "Revert window configuration."
   (save-selected-window
     (ignore-errors (jump-to-register responsive-window-register)))
-  (setq responsive-window--dirty-p nil))
+  (setq responsive-window--dirty-p nil)
+  (walk-windows
+   (lambda (win)
+     (when-let ((buf (pop responsive-window--dirty-buffers)))
+       (set-window-buffer win buf)))))
 
 ;;
 ;;; Core
@@ -117,16 +124,22 @@ The value should be set from 0 to 1."
 (defun responsive-window--do ()
   "Do responsive work."
   (when responsive-window--first-reached-p
+    (setq responsive-window--dirty-buffers nil)  ; clear
     (dolist (win (reverse (window-list)))
-      (let ((w (window-text-width win))
-            (h (window-text-height win)))
-        (when (or (< w  responsive-window-min-width)
-                  (< h responsive-window-min-height))
-          (ignore-errors (delete-window win))
-          (setq responsive-window--dirty-p t))))))
+      (let ((w   (window-text-width win))
+            (h   (window-text-height win))
+            (buf (window-buffer win)))
+        (cond ((or (< w  responsive-window-min-width)
+                   (< h responsive-window-min-height))
+               (ignore-errors (delete-window win))
+               (setq responsive-window--dirty-p t))
+              (t
+               (push buf responsive-window--dirty-buffers)))))))
 
 (defun responsive-window--size-change (&optional frame &rest _)
-  "Window resize hook."
+  "Window resize hook.
+
+Argument FRAME is the effected frame."
   (cond ((responsive-window--reach-size)
          (cond (responsive-window--dirty-p
                 (responsive-window--revert-layout))
