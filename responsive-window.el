@@ -115,7 +115,8 @@ The value should be set from 0 to 1."
   (setq responsive-window--dirty-p nil)
   (walk-windows
    (lambda (win)
-     (when-let ((buf (pop responsive-window--dirty-buffers)))
+     (when-let* ((buf (pop responsive-window--dirty-buffers))
+                 ((buffer-live-p buf)))
        (set-window-buffer win buf)))))
 
 ;;
