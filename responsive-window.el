@@ -141,15 +141,16 @@ The value should be set from 0 to 1."
   "Window resize hook.
 
 Argument FRAME is the effected frame."
-  (cond ((responsive-window--reach-size)
-         (cond (responsive-window--dirty-p
-                (responsive-window--revert-layout))
-               (t
-                (responsive-window--remember-layout))))
-        (t
-         (unless (or (frame-parent frame)  ; only root frame
-                     (active-minibuffer-window))
-           (responsive-window--do)))))
+  (elenv-with-no-redisplay
+    (cond ((responsive-window--reach-size)
+           (cond (responsive-window--dirty-p
+                  (responsive-window--revert-layout))
+                 (t
+                  (responsive-window--remember-layout))))
+          (t
+           (unless (or (frame-parent frame)  ; only root frame
+                       (active-minibuffer-window))
+             (responsive-window--do))))))
 
 (provide 'responsive-window)
 ;;; responsive-window.el ends here
