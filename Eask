@@ -1,3 +1,5 @@
+;; -*- mode: eask; lexical-binding: t -*-
+
 (package "responsive-window"
          "0.1.0"
          "Adapt to different screen sizes automatically")
